@@ -1,11 +1,14 @@
 # TODO
 
-- [x] Create class with tasks and students
-- [x] Add tasks to class
-- [x] Add students to class
-- [x] Add grades associated with tasks to students
-- [x] Total of all tasks should not exceed max in class (10)
-- [x] add grade to wrong task returns err
-- [ ] get rid of hardcoded max value, set it in class
+- [x] remove task from student
+- [ ] add task to class
+- [ ] class has total from all tasks
+- [ ] remove task from class
+
+## UI
+
+- [ ] Functions for UI?
+- [ ] add task (to class and all students)
+- [ ] add student (with all current tasks)
 - [ ] remove task from class (with all students tasks removed as well)
-- [ ] remove grade for a task for student
+- [ ] change task value and update all students grades (set them to 0? Or make them clamp?). Or don't update but nitify if they are out of bounds?

@@ -1,59 +1,42 @@
 package grades
 
-MAXIMUM_CLASS_TOTAL :: 10
+// Grade type for convenience.
+Grade :: int
 
-Class :: struct {
-	total: int,
-	tasks: map[Task]struct {},
+// Use struct fields for read only.
+// Do not change fields directly, otherwise you will get undefined behaviour. Set them with provided procedures.
+Student :: struct {
+	tasks: map[Task]Grade,
+	total: Grade,
 }
 
 Task :: struct {
-	name: string,
-	val:  int,
+	val: Grade,
 }
 
-Student :: struct {
-	name:         string,
-	total:        int,
-	tasks_totals: map[Task]int,
+// Updates student tasks and total. Error returned if grade is greater than task value.
+set_grade :: proc(s: ^Student, t: Task, g: Grade) -> Error {
+	if g > t.val {
+		return Grade_Higher_Than_Task_Error{got = g, task = t}
+	}
+
+	if t in s.tasks {
+		s.total -= s.tasks[t]
+	}
+
+	s.tasks[t] = g
+	s.total += g
+
+	return nil
 }
 
-Error :: enum {
-	None,
-	Grade_Exceeds_Task_Value,
-	Task_Value_Exceeds_Class_Maximum,
-	Wrong_Task,
-}
-
-add_task :: proc(c: ^Class, t: Task) -> Error {
-	if c.total + t.val > MAXIMUM_CLASS_TOTAL {
-		return .Task_Value_Exceeds_Class_Maximum
+// Removes task from student tasks and reduced total.
+remove_task :: proc(s: ^Student, t: Task) -> bool {
+	g, ok := s.tasks[t]
+	if ok {
+		s.total -= g
+		delete_key(&s.tasks, t)
 	}
 
-	c.tasks[t] = struct {}{}
-	c.total += t.val
-
-	return .None
-}
-
-add_student :: proc(_: ^Class, s: Student) {}
-
-// If Student doesn't have initialized map in tasks_totals, add_grade automatically allocates one. Make sure to delete it after use
-add_grade :: proc(c: Class, s: ^Student, t: Task, val: int) -> Error {
-	if _, ok := c.tasks[t]; !ok {
-		return .Wrong_Task
-	}
-
-	if s.tasks_totals == nil {
-		s.tasks_totals = make(map[Task]int)
-	}
-
-	if s.tasks_totals[t] + val > t.val {
-		return .Grade_Exceeds_Task_Value
-	}
-
-	s.total += val
-	s.tasks_totals[t] += val
-
-	return .None
+	return ok
 }

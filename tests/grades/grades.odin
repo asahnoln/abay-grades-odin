@@ -4,58 +4,72 @@ import "core:testing"
 import "src:grades"
 
 @(test)
-grade_cannot_exceed_task_value :: proc(t: ^testing.T) {
-	task := grades.Task {
+set_grade :: proc(t: ^testing.T) {
+	s := grades.Student {
+		total = 1,
+	}
+	tsk := grades.Task {
 		val = 2,
 	}
+	defer delete(s.tasks)
 
-	c := grades.Class{}
-	c.tasks[task] = {}
-	defer delete(c.tasks)
-
-	st := grades.Student{}
-	defer delete(st.tasks_totals)
-
-	err := grades.add_grade(c, &st, task, 3)
-	testing.expect(t, err == .Grade_Exceeds_Task_Value)
+	grades.set_grade(&s, tsk, 2)
+	testing.expect_value(t, s.tasks[tsk], 2)
+	testing.expect_value(t, s.total, 3)
 }
 
 @(test)
-grades_added_to_different_tasks :: proc(t: ^testing.T) {
-	task1 := grades.Task {
-		val = 1,
+reduce_grade_for_task_reduces_total :: proc(t: ^testing.T) {
+	tsk := grades.Task {
+		val = 3,
 	}
-	task2 := grades.Task {
-		val = 2,
+	s := grades.Student {
+		total = 4,
 	}
-	c := grades.Class {
-		tasks = {},
-	}
-	c.tasks[task1] = struct {}{}
-	c.tasks[task2] = struct {}{}
-	defer delete(c.tasks)
+	defer delete(s.tasks)
 
-	st := grades.Student{}
-	defer delete(st.tasks_totals)
+	s.tasks[tsk] = 3
 
-	err := grades.add_grade(c, &st, task1, 1)
-	testing.expect(t, err == .None)
-
-	err = grades.add_grade(c, &st, task2, 2)
-	testing.expect(t, err == .None)
+	grades.set_grade(&s, tsk, 2)
+	testing.expect_value(t, s.total, 3)
 }
 
 @(test)
-wrong_task_returns_err :: proc(t: ^testing.T) {
-	c := &grades.Class{}
-	defer delete(c.tasks)
-	task := grades.Task {
-		name = "proper task",
+error_when_grade_is_greater_than_task :: proc(t: ^testing.T) {
+	s: grades.Student
+	defer delete(s.tasks)
+
+	tsk := grades.Task {
+		val = 5,
 	}
 
-	st := grades.Student{}
-	defer delete(st.tasks_totals)
+	err := grades.set_grade(&s, tsk, 6)
+	testing.expect_value(t, err, grades.Grade_Higher_Than_Task_Error{got = 6, task = tsk})
+}
 
-	err := grades.add_grade(c^, &st, grades.Task{name = "does not exist"}, 1)
-	testing.expect(t, err == .Wrong_Task)
+@(test)
+remove_task_from_student :: proc(t: ^testing.T) {
+	tsk := grades.Task{}
+	s := grades.Student {
+		total = 5,
+	}
+	defer delete(s.tasks)
+
+	s.tasks[tsk] = 4
+
+	ok := grades.remove_task(&s, tsk)
+	testing.expect(t, ok)
+	testing.expect(t, !(tsk in s.tasks))
+	testing.expect_value(t, s.total, 1)
+}
+
+@(test)
+remove_task_that_doesnt_exist :: proc(t: ^testing.T) {
+	s := grades.Student {
+		total = 9,
+	}
+
+	ok := grades.remove_task(&s, grades.Task{})
+	testing.expect(t, !ok)
+	testing.expect_value(t, s.total, 9)
 }
