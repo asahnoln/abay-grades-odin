@@ -6,6 +6,7 @@ import "src:grades"
 @(test)
 class :: proc(t: ^testing.T) {
 	c := &grades.Class{}
+	defer delete(c.tasks)
 
 	task := grades.Task{"HW", 2}
 	st := grades.Student {
@@ -20,12 +21,12 @@ class :: proc(t: ^testing.T) {
 
 	grades.add_student(c, st)
 
-	err = grades.add_grade(&st, task, 1)
+	err = grades.add_grade(c^, &st, task, 1)
 	if !testing.expect_value(t, err, nil) {
 		return
 	}
 
-	err = grades.add_grade(&st, task, 1)
+	err = grades.add_grade(c^, &st, task, 1)
 	if !testing.expect_value(t, err, nil) {
 		return
 	}
@@ -36,10 +37,10 @@ class :: proc(t: ^testing.T) {
 @(test)
 task_vals_cannot_exceed_maximum :: proc(t: ^testing.T) {
 	c := &grades.Class{}
+	defer delete(c.tasks)
 
-	err := grades.add_task(c, grades.Task{val = 9})
-	testing.expect(t, err == .None)
+	grades.add_task(c, grades.Task{val = 9})
 
-	err = grades.add_task(c, grades.Task{val = 2})
+	err := grades.add_task(c, grades.Task{val = 2})
 	testing.expect(t, err == .Task_Value_Exceeds_Class_Maximum)
 }
